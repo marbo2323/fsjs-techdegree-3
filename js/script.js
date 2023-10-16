@@ -12,6 +12,7 @@ const zipCodeInputField = document.querySelector("#zip");
 const cvvInputField = document.querySelector("#cvv");
 
 const defaultPaymentMethod = "credit-card";
+const validationHandlerCustomAttributeName = "data-validation-handler";
 
 function showHideOtherJobRoleField() {
   otherJobRoleInputField.style.display =
@@ -48,6 +49,23 @@ function calculateActivitiesTotal() {
     totalRegexp,
     totalReplacement
   );
+}
+
+function preventSelectingOverlappingActivities(e) {
+  const currentCheckbox = e.target;
+  const currentCheckboxDateTime = currentCheckbox.dataset.dayAndTime;
+
+  if (currentCheckboxDateTime) {
+    const fieldSet = currentCheckbox.closest("fieldset");
+    fieldSet
+      .querySelectorAll(
+        `input[type='checkbox'][data-day-and-time='${currentCheckboxDateTime}']`
+      )
+      .forEach((checkBox) => {
+        checkBox.disabled =
+          checkBox !== currentCheckbox && currentCheckbox.checked;
+      });
+  }
 }
 
 function togglePaymentMethodSection() {
@@ -89,21 +107,21 @@ function isValidCvv(cvv) {
   return /^\d{3}$/.test(cvv);
 }
 
-function validateForm(event) {
-  const validateInputField = (inputField, validationHandler) => {
-    const fielLabel = inputField.closest("label");
-    const fieldHint = inputField.parentNode.querySelector("span.hint");
-    if (!validationHandler(inputField.value)) {
-      console.log(inputField.id + " is not valid");
-      fielLabel.className = "not-valid";
-      fieldHint.style.display = "block";
-      event.preventDefault();
-    } else {
-      fielLabel.className = "valid";
-      fieldHint.style.display = "none";
-    }
-  };
+function validateInputField(inputField, validationHandler) {
+  const fielLabel = inputField.closest("label");
+  const fieldHint = inputField.parentNode.querySelector("span.hint");
+  if (!validationHandler(inputField.value)) {
+    console.log(inputField.id + " is not valid");
+    fielLabel.className = "not-valid";
+    fieldHint.style.display = "block";
+    event.preventDefault();
+  } else {
+    fielLabel.className = "valid";
+    fieldHint.style.display = "none";
+  }
+}
 
+function validateForm(event) {
   const validateActivities = () => {
     const activitiesLegend = activitiesFieldset.querySelector("legend");
     const activitiesHint = activitiesFieldset.querySelector("p.hint");
@@ -129,7 +147,7 @@ function validateForm(event) {
   validateActivities();
 }
 
-function setupCheckBoxFocus() {
+function setupCheckBoxFocusStyle() {
   activitiesFieldset
     .querySelectorAll("input[type='checkbox']")
     .forEach((checkBox) => {
@@ -138,7 +156,6 @@ function setupCheckBoxFocus() {
       });
 
       checkBox.addEventListener("blur", (e) => {
-        //e.target.parentElement.className = "";
         activitiesFieldset
           .querySelector("label.focus")
           .classList.remove("focus");
@@ -146,7 +163,7 @@ function setupCheckBoxFocus() {
     });
 }
 
-function initForm() {
+function initFormFeatures() {
   userNameInputField.focus();
   showHideOtherJobRoleField();
   colorSelectField.disabled = true;
@@ -160,10 +177,50 @@ function initForm() {
   );
 
   activitiesFieldset.addEventListener("change", calculateActivitiesTotal);
+  activitiesFieldset.addEventListener(
+    "change",
+    preventSelectingOverlappingActivities
+  );
+
   paymentSelectField.addEventListener("change", togglePaymentMethodSection);
 
   registrationForm.addEventListener("submit", validateForm);
-  setupCheckBoxFocus();
+  setupCheckBoxFocusStyle();
+
+  // write validation handler names to
+  // the required field data attribute
+  userNameInputField.setAttribute(
+    validationHandlerCustomAttributeName,
+    isValidName.name
+  );
+  emailInputField.setAttribute(
+    validationHandlerCustomAttributeName,
+    isValidEmail.name
+  );
+  creditCardInputField.setAttribute(
+    validationHandlerCustomAttributeName,
+    isValidCreditCard.name
+  );
+  zipCodeInputField.setAttribute(
+    validationHandlerCustomAttributeName,
+    isValidZipCode.name
+  );
+  cvvInputField.setAttribute(
+    validationHandlerCustomAttributeName,
+    isValidCvv.name
+  );
+
+  // add event listeners to the required fields to make
+  // them use the validation function from data attribute
+  document
+    .querySelectorAll(`form [${validationHandlerCustomAttributeName}]`)
+    .forEach((field) => {
+      field.addEventListener("input", (e) => {
+        console.log("validating field " + e.target.id);
+        const validationFandler = window[e.target.dataset.validationHandler];
+        validateInputField(e.target, validationFandler);
+      });
+    });
 }
 
-initForm();
+initFormFeatures();
