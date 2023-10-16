@@ -111,7 +111,6 @@ function validateInputField(inputField, validationHandler) {
   const fielLabel = inputField.closest("label");
   const fieldHint = inputField.parentNode.querySelector("span.hint");
   if (!validationHandler(inputField.value)) {
-    console.log(inputField.id + " is not valid");
     fielLabel.className = "not-valid";
     fieldHint.style.display = "block";
     event.preventDefault();
@@ -126,7 +125,6 @@ function validateForm(event) {
     const activitiesLegend = activitiesFieldset.querySelector("legend");
     const activitiesHint = activitiesFieldset.querySelector("p.hint");
     if (!isValidActivites()) {
-      console.log("activities fieldset is not valid");
       activitiesLegend.classList.add("not-valid");
       activitiesHint.style.display = "block";
       event.preventDefault();
@@ -216,7 +214,6 @@ function initFormFeatures() {
     .querySelectorAll(`form [${validationHandlerCustomAttributeName}]`)
     .forEach((field) => {
       field.addEventListener("input", (e) => {
-        console.log("validating field " + e.target.id);
         const validationFandler = window[e.target.dataset.validationHandler];
         validateInputField(e.target, validationFandler);
       });
